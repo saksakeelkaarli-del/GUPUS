@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gupus ja saksa keele saladus</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f2ff;min-height:100vh;padding:1.5rem 1rem 3rem;display:flex;justify-content:center;color:#1a1a2e}
+#app{width:100%;max-width:540px}
+@keyframes fl{0%,100%{opacity:1;transform:translateY(0) scale(1)}40%{opacity:.7;transform:translateY(-6px) scale(1.05)}70%{opacity:.9;transform:translateY(-3px)}}
+@keyframes sh{0%,100%{transform:rotate(0deg)}20%{transform:rotate(-8deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(5deg)}}
+@keyframes glow{0%,100%{text-shadow:0 0 8px #7c3aed}50%{text-shadow:0 0 20px #7c3aed,0 0 40px #4f1bb5}}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+.fl{animation:fl .9s ease infinite;display:inline-block}
+.sh{animation:sh .5s ease}
+.glow{animation:glow 2s ease infinite}
+.screen{display:none}.screen.active{display:block}
+h1{font-size:20px;font-weight:700;color:#2d1b69}
+h2{font-size:17px;font-weight:700;color:#2d1b69;margin-bottom:12px}
+.badge{display:inline-block;background:#7c3aed;border:1.5px solid #7c3aed;border-radius:6px;padding:3px 12px;font-size:11px;font-weight:600;color:#4c1d95}
+.gbox{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.gghost{font-size:38px;line-height:1;flex-shrink:0}
+.gbubble{background:#ede9ff;border:1px solid #c4b5fd;border-radius:0 14px 14px 14px;padding:10px 14px;flex:1}
+.glabel{font-size:10px;color:#7c3aed;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.gmsg{font-size:13px;color:#2d1b69;line-height:1.6}
+.infobox{background:#e8e4fa;border:1px solid #2d1b69;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.infobox p{font-size:13px;color:#6d28d9;margin:3px 0}
+.infotitle{font-size:14px;font-weight:600;color:#4c1d95;margin-bottom:8px!important}
+.room-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.room-card{border-radius:10px;padding:12px 14px;border:1.5px solid}
+.btn-main{background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:14px 32px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:filter .15s}
+.btn-main:hover{filter:brightness(1.15)}
+.btn-sec{background:#ede9ff;color:#4c1d95;border:1.5px solid #c4b5fd;border-radius:10px;padding:12px 26px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:filter .15s}
+.btn-sec:hover{filter:brightness(1.2)}
+.prog-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.prog-bar-wrap{background:#ede9ff;height:6px;border-radius:3px;margin-top:5px;overflow:hidden}
+.prog-bar-fill{height:100%;border-radius:3px;transition:width .5s ease;background:#7c3aed}
+.task-type-badge{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:10px}
+.q-card{border-radius:14px;padding:20px 18px;margin-bottom:14px;border:1.5px solid}
+.q-main{font-size:20px;font-weight:700;line-height:1.4;text-align:center}
+.q-sub{font-size:13px;text-align:center;margin-top:6px;opacity:.8}
+/* Valikud */
+.opts-grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.opts-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.opt-btn{border-radius:9px;padding:12px 8px;font-size:13px;font-weight:600;cursor:pointer;width:100%;text-align:center;line-height:1.3;font-family:inherit;transition:filter .15s,transform .1s;border:1.5px solid}
+.opt-btn:hover:not([disabled]){filter:brightness(1.2);transform:scale(1.02)}
+.opt-btn:disabled{cursor:default}
+.opt-normal{background:#ede9ff;border-color:#4c1d95;color:#2d1b69}
+.opt-ok{background:#dcfce7;border-color:#22c55e;color:#166534}
+.opt-fail{background:#fee2e2;border-color:#ef4444;color:#991b1b}
+/* Lausejärjestus */
+.word-pool{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;min-height:44px;background:#e8e4fa;border:1.5px solid #2d1b69;border-radius:10px;padding:10px}
+.word-built{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;min-height:44px;background:#f0eeff;border:1.5px dashed #3d2c7a;border-radius:10px;padding:10px;align-items:center}
+.word-chip{background:#7c3aed;color:#4c1d95;border:1.5px solid #4c35a0;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;transition:filter .15s,transform .1s;font-family:inherit}
+.word-chip:hover{filter:brightness(1.2);transform:scale(1.04)}
+.word-chip.placed{background:#f0eeff;border-color:#7c3aed;color:#5b21b6}
+.word-chip-built{background:#ede9ff;color:#2d1b69;border:1.5px solid #7c3aed;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:filter .15s}
+.word-chip-built:hover{filter:brightness(1.3)}
+.check-btn{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-right:8px}
+.clear-btn{background:transparent;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;font-family:inherit}
+/* Hint */
+.hint-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.hint-btn{background:transparent;border:1px solid #c4b5fd;border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;color:#7c3aed;font-family:inherit}
+.score-txt{font-size:12px;color:#7c3aed}
+/* Result */
+.result-center{text-align:center;padding-top:1.5rem}
+.rscore-ok{background:#dcfce7;border:1.5px solid #22c55e;color:#166534;border-radius:10px;display:inline-block;padding:10px 24px;font-size:18px;font-weight:700;margin-bottom:18px}
+.rscore-fail{background:#fee2e2;border:1.5px solid #ef4444;color:#991b1b;border-radius:10px;display:inline-block;padding:10px 24px;font-size:18px;font-weight:700;margin-bottom:18px}
+.victory-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.v-card{border-radius:10px;padding:11px 13px;border:1.5px solid;text-align:left}
+.total-box{background:#e8e4fa;border:1px solid #2d1b69;border-radius:10px;padding:14px;text-align:center;margin-bottom:20px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="s-intro" class="screen active">
+  <div style="text-align:center;margin-bottom:18px">
+    <div class="fl glow" style="font-size:66px;line-height:1;margin-bottom:10px">👾</div>
+    <h1 style="margin-bottom:6px">Gupus ja saksa keele saladus</h1>
+    <span class="badge">Saksa keel A1 · Põgenemismäng II</span>
+  </div>
+  <div class="gbox">
+    <div class="gghost fl">👾</div>
+    <div class="gbubble">
+      <div class="glabel">👾 Gupus räägib:</div>
+      <div class="gmsg">Muaha! Mina olen Gupus — tumeda torni vaim! Minu vangid peavad läbima 4 keerulist katset. Lihtsad sõnaküsimused? Ei! Siin on PÄRIS väljakutsed. Kui julged, alusta! 🔮</div>
+    </div>
+  </div>
+  <div class="infobox">
+    <p class="infotitle">Mis sind ootab:</p>
+    <p>🏷️  Tuba 1 — Artiklid: der, die või das?</p>
+    <p>🔀  Tuba 2 — Lausejärjestus: pane sõnad õigesse järjekorda</p>
+    <p>↔️  Tuba 3 — Vastandid: leia õige vastaspaar</p>
+    <p>🔍  Tuba 4 — Mis ei sobi? Leia sissetungija!</p>
+    <p style="margin-top:8px;color:#7c3aed">Vaja 4/5 õiget vastust, et uks avaneks.</p>
+  </div>
+  <div class="room-grid" id="intro-rooms"></div>
+  <div style="text-align:center">
+    <button class="btn-main" onclick="startGame()">Julgen proovida! 🔮</button>
+  </div>
+</div>
+
+<div id="s-playing" class="screen">
+  <div class="prog-row">
+    <span style="font-size:22px" id="p-emoji"></span>
+    <div style="flex:1">
+      <div style="font-weight:600;font-size:13px;color:#4c1d95" id="p-title"></div>
+      <div class="prog-bar-wrap"><div class="prog-bar-fill" id="p-bar" style="width:0%"></div></div>
+    </div>
+    <span style="font-size:11px;color:#7c3aed;min-width:32px;text-align:right" id="p-counter"></span>
+  </div>
+  <div class="gbox">
+    <div class="gghost" id="g-ghost">👾</div>
+    <div class="gbubble">
+      <div class="glabel" id="g-label"></div>
+      <div class="gmsg" id="g-msg"></div>
+    </div>
+  </div>
+  <div id="task-area"></div>
+  <div class="hint-row">
+    <button class="hint-btn" id="hint-btn" onclick="toggleHint()">💡 Vihje</button>
+    <span class="score-txt" id="score-txt">✓ 0 õiget</span>
+  </div>
+</div>
+
+<div id="s-result" class="screen">
+  <div class="result-center">
+    <div style="font-size:54px;margin-bottom:12px" id="r-icon"></div>
+    <h2 id="r-title"></h2>
+    <div class="gbox" style="text-align:left">
+      <div class="gghost" id="r-ghost">👾</div>
+      <div class="gbubble">
+        <div class="glabel" id="r-jlabel"></div>
+        <div class="gmsg" id="r-jmsg"></div>
+      </div>
+    </div>
+    <div id="r-score-box"></div>
+    <br>
+    <button id="r-btn" onclick="resultAction()"></button>
+  </div>
+</div>
+
+<div id="s-victory" class="screen">
+  <div style="text-align:center;padding-top:1rem">
+    <div class="fl" style="font-size:64px;margin-bottom:10px;display:inline-block" id="v-medal"></div>
+    <h1 style="margin-bottom:6px">Gupus on lüüa saanud! 🎊</h1>
+    <div class="gbox" style="text-align:left;margin-top:14px">
+      <div class="gghost fl">👾</div>
+      <div class="gbubble">
+        <div class="glabel">👾 Gupus räägib:</div>
+        <div class="gmsg" id="v-msg"></div>
+      </div>
+    </div>
+    <div class="victory-grid" id="v-grid"></div>
+    <div class="total-box">
+      <div style="font-size:12px;color:#7c3aed;margin-bottom:4px">Kokku</div>
+      <div style="font-size:26px;font-weight:700;color:#4c1d95" id="v-total"></div>
+    </div>
+    <button class="btn-sec" onclick="restartGame()">Mängi uuesti 🔮</button>
+  </div>
+</div>
+
+</div>
+<script>
+// ── ROOMS ──────────────────────────────────────────────────────────────────
+var ROOMS = [
+  {
+    title:"Tuba 1: Artiklid",de:"Artikel",emoji:"🏷️",
+    bg:"#ede9ff",tc:"#4c1d95",badge:"#c4b5fd",accent:"#7c3aed",
+    intro:"Artiklitest saab saksa keele hing! Vali iga sõna jaoks õige artikkel: der (m), die (f) või das (n). Gupus naerab, kui eksid!",
+    type:"artikel",
+    qs:[
+      {q:"___ Mutter",right:"die",opts:["der","die","das"],hint:"Emme on naissoost → die",exp:"die Mutter (naissoost)"},
+      {q:"___ Vater",right:"der",opts:["der","die","das"],hint:"Isa on meessoost → der",exp:"der Vater (meessoost)"},
+      {q:"___ Kind",right:"das",opts:["der","die","das"],hint:"Laps on kesksugu → das",exp:"das Kind (kesksugu)"},
+      {q:"___ Schule",right:"die",opts:["der","die","das"],hint:"Kool on naissoost → die. Paljud -e lõpuga sõnad on die.",exp:"die Schule (naissoost)"},
+      {q:"___ Bahnhof",right:"der",opts:["der","die","das"],hint:"Jaam on meessoost → der",exp:"der Bahnhof (meessoost)"},
+      {q:"___ Haus",right:"das",opts:["der","die","das"],hint:"Maja on kesksugu → das",exp:"das Haus (kesksugu)"},
+      {q:"___ Katze",right:"die",opts:["der","die","das"],hint:"Kass on naissoost → die",exp:"die Katze (naissoost)"},
+      {q:"___ Hund",right:"der",opts:["der","die","das"],hint:"Koer on meessoost → der",exp:"der Hund (meessoost)"},
+      {q:"___ Zimmer",right:"das",opts:["der","die","das"],hint:"-er/-chen/-lein lõpuga on sageli das",exp:"das Zimmer (kesksugu)"},
+      {q:"___ Straße",right:"die",opts:["der","die","das"],hint:"Tänav on naissoost → die",exp:"die Straße (naissoost)"},
+    ]
+  },
+  {
+    title:"Tuba 2: Lausejärjestus",de:"Satzbau",emoji:"🔀",
+    bg:"#dbeafe",tc:"#1e3a8a",badge:"#93c5fd",accent:"#3b82f6",
+    intro:"Gupus on laused sassi ajanud! Pane sõnad õigesse järjekorda, et lause moodustuks. Kliki sõnadel järjekorras.",
+    type:"lausejarjestus",
+    qs:[
+      {words:["bin","ich","Felix"],answer:"Ich bin Felix",hint:"Saksa lauses on tegusõna alati teisel kohal.",exp:"Ich bin Felix."},
+      {words:["du","bist","alt","wie"],answer:"Wie alt bist du",hint:"Küsilauses on küsisõna esimene, tegusõna teine.",exp:"Wie alt bist du?"},
+      {words:["wohnen","wir","Berlin","in"],answer:"Wir wohnen in Berlin",hint:"Alus tuleb esimesena, tegusõna teisena.",exp:"Wir wohnen in Berlin."},
+      {words:["Katze","eine","ist","Minka"],answer:"Minka ist eine Katze",hint:"Nimisõna (Minka) alustab lauset, olema-verb tuleb teisele kohale.",exp:"Minka ist eine Katze."},
+      {words:["Geschwister","habe","keine","ich"],answer:"Ich habe keine Geschwister",hint:"Eitussõna 'keine' tuleb nimisõna ette.",exp:"Ich habe keine Geschwister."},
+    ]
+  },
+  {
+    title:"Tuba 3: Vastandid",de:"Gegensätze",emoji:"↔️",
+    bg:"#dcfce7",tc:"#14532d",badge:"#86efac",accent:"#22c55e",
+    intro:"Gupus armastab vastandeid! Leia igale sõnale õige vastand. Glossaarist leiad neid palju!",
+    type:"vastandid",
+    qs:[
+      {q:"alt →",right:"neu",opts:["jung","neu","schön","klein"],hint:"vana ↔ ?",exp:"alt ↔ neu (vana ↔ uus)"},
+      {q:"groß →",right:"klein",opts:["kurz","dunkel","klein","leicht"],hint:"suur ↔ ?",exp:"groß ↔ klein (suur ↔ väike)"},
+      {q:"hell →",right:"dunkel",opts:["schwer","dunkel","laut","neu"],hint:"hele ↔ ?",exp:"hell ↔ dunkel (hele ↔ tume)"},
+      {q:"lang →",right:"kurz",opts:["kurz","klein","jung","leicht"],hint:"pikk ↔ ?",exp:"lang ↔ kurz (pikk ↔ lühike)"},
+      {q:"schwer →",right:"leicht",opts:["leicht","neu","ruhig","alt"],hint:"raske ↔ ?",exp:"schwer ↔ leicht (raske ↔ kerge)"},
+      {q:"ruhig →",right:"laut",opts:["laut","schnell","neu","modern"],hint:"vaikne ↔ ?",exp:"ruhig ↔ laut (vaikne ↔ vali)"},
+      {q:"freundlich →",right:"unfreundlich",opts:["unfreundlich","lustig","langweilig","streng"],hint:"sõbralik ↔ ?",exp:"freundlich ↔ unfreundlich"},
+      {q:"bekannt →",right:"unbekannt",opts:["unbekannt","modern","interessant","alt"],hint:"tuntud ↔ ?",exp:"bekannt ↔ unbekannt (tuntud ↔ tundmatu)"},
+      {q:"gemütlich →",right:"ungemütlich",opts:["ungemütlich","praktisch","sauber","ordentlich"],hint:"hubane ↔ ?",exp:"gemütlich ↔ ungemütlich"},
+      {q:"mit →",right:"ohne",opts:["ohne","bei","zu","von"],hint:"koos ↔ ?",exp:"mit ↔ ohne (koos ↔ ilma)"},
+    ]
+  },
+  {
+    title:"Tuba 4: Mis ei sobi?",de:"Was passt nicht?",emoji:"🔍",
+    bg:"#ffedd5",tc:"#7c2d12",badge:"#fdba74",accent:"#f97316",
+    intro:"Gupus on ühe sõna igas rühmas ära peitnud — see ei kuulu sinna! Leia sissetungija!",
+    type:"eisobi",
+    qs:[
+      {q:"Loomad:",opts:["der Hund","die Katze","das Sofa","der Vogel"],right:"das Sofa",hint:"Üks neist on mööbel, mitte loom.",exp:"das Sofa on mööbel, kõik teised on loomad"},
+      {q:"Värvid:",opts:["rot","blau","müde","grün"],right:"müde",hint:"Üks neist on tunne, mitte värv.",exp:"müde = väsinud (tunne), kõik teised on värvid"},
+      {q:"Nädalapäevad:",opts:["Montag","Dienstag","Januar","Mittwoch"],right:"Januar",hint:"Üks neist on kuu, mitte päev.",exp:"Januar on kuu, kõik teised on nädalapäevad"},
+      {q:"Koolitarbed:",opts:["der Bleistift","das Heft","die Milch","der Radiergummi"],right:"die Milch",hint:"Üks neist on jook, mitte kooliasi.",exp:"die Milch = piim (jook), kõik teised on koolitarbed"},
+      {q:"Tunded:",opts:["glücklich","traurig","müde","der Bahnhof"],right:"der Bahnhof",hint:"Üks neist on koht, mitte tunne.",exp:"der Bahnhof = raudteejaam (koht), kõik teised on tunded"},
+      {q:"Kodu:",opts:["das Wohnzimmer","die Küche","das Bad","der Zoo"],right:"der Zoo",hint:"Üks neist on avalik koht, mitte kodu tuba.",exp:"der Zoo = loomaaed, kõik teised on kodu toad"},
+      {q:"Joogid:",opts:["der Kaffee","der Tee","die Wurst","die Milch"],right:"die Wurst",hint:"Üks neist on söök, mitte jook.",exp:"die Wurst = vorst (söök), kõik teised on joogid"},
+      {q:"Perekond:",opts:["die Mutter","der Vater","die Tante","der Bahnhof"],right:"der Bahnhof",hint:"Üks neist ei ole pereliige.",exp:"der Bahnhof = raudteejaam, kõik teised on pereliikmed"},
+      {q:"Spordialad:",opts:["Tennis spielen","Fußball spielen","kochen","Volleyball spielen"],right:"kochen",hint:"Üks neist on tegevus köögis, mitte sport.",exp:"kochen = keetma (köögitegevus), kõik teised on spordialad"},
+      {q:"Linna kohad:",opts:["das Museum","das Kino","das Bett","der Park"],right:"das Bett",hint:"Üks neist on mööbel, mitte linna koht.",exp:"das Bett = voodi (mööbel), kõik teised on linna kohad"},
+    ]
+  }
+];
+
+var PASS=4,TOTALQ=5;
+var OKMSGS=["Suurepärane! Sa ei peta Gupust!","Täpselt! Gupus on vihane!","Perfekt! 🌟","Klasse! Gupus põrnitseb sind!","Väga hästi! Veel neli sellist!"];
+var FAILMSGS=["MUAHA! Eksisite!","Vale! Gupus naerab!","Ei-ei! Proovi uuesti järgmine kord!"];
+
+var roomIdx=0,qIdx=0,score=0,roomScores=[],hintShown=false,okI=0,answered=false,lastFinal=0;
+var builtWords=[],poolWords=[];
+
+function $(id){return document.getElementById(id);}
+function show(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});$(id).classList.add('active');}
+
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+function buildIntroRooms(){
+  var g=$('intro-rooms');g.innerHTML='';
+  ROOMS.forEach(function(r){
+    var d=document.createElement('div');
+    d.className='room-card';
+    d.style.background=r.bg;
+    d.style.borderColor=r.badge;
+    d.innerHTML='<div style="font-size:22px">'+r.emoji+'</div><div style="font-size:13px;font-weight:600;margin:5px 0 2px;color:'+r.tc+'">'+r.title+'</div><div style="font-size:11px;color:'+r.accent+'">'+r.de+'</div>';
+    g.appendChild(d);
+  });
+}
+
+function setGupus(mood,msg){
+  var faces={happy:"😤",sad:"😈",excited:"👾",thinking:"🤔",normal:"👾"};
+  var face=faces[mood]||"👾";
+  var anim=(mood==="excited"||mood==="happy")?"fl":"";
+  $('g-ghost').className='gghost '+anim;
+  $('g-label').textContent=face+' Gupus räägib:';
+  $('g-msg').textContent=msg;
+}
+
+function startGame(){roomIdx=0;qIdx=0;score=0;roomScores=[];okI=0;loadRoom();}
+function restartGame(){startGame();show('s-intro');buildIntroRooms();}
+
+function loadRoom(){
+  qIdx=0;score=0;answered=false;hintShown=false;
+  var r=ROOMS[roomIdx];
+  $('p-emoji').textContent=r.emoji;
+  $('p-title').textContent=r.title;
+  $('hint-btn').style.color='#7c6fad';
+  show('s-playing');
+  loadQuestion();
+}
+
+function getQs(){
+  var r=ROOMS[roomIdx];
+  var arr=shuffle(r.qs);
+  return arr.slice(0,TOTALQ);
+}
+
+var currentQs=[];
+
+function loadRoom(){
+  qIdx=0;score=0;answered=false;hintShown=false;
+  var r=ROOMS[roomIdx];
+  currentQs=getQs();
+  $('p-emoji').textContent=r.emoji;
+  $('p-title').textContent=r.title;
+  $('hint-btn').style.color='#7c6fad';
+  show('s-playing');
+  loadQuestion();
+}
+
+function loadQuestion(){
+  answered=false;hintShown=false;builtWords=[];poolWords=[];
+  var r=ROOMS[roomIdx];
+  var q=currentQs[qIdx];
+  $('p-counter').textContent=(qIdx+1)+'/'+TOTALQ;
+  $('p-bar').style.width=(qIdx/TOTALQ*100)+'%';
+  $('score-txt').textContent='✓ '+score+' õiget';
+  $('hint-btn').textContent='💡 Vihje';
+  $('hint-btn').style.color='#7c6fad';
+  $('hint-btn').disabled=false;
+
+  if(qIdx===0){setGupus('excited',r.intro);}
+  else if(qIdx===2){setGupus('normal','Poolel teel! Gupus hakkab muretsema... 😤');}
+  else{setGupus('normal','Küsimus '+(qIdx+1)+'/'+TOTALQ+'. Gupus jälgib sind!');}
+
+  renderTask(r,q);
+}
+
+function renderTask(r,q){
+  var area=$('task-area');
+  area.innerHTML='';
+
+  var typeBadge=document.createElement('div');
+  typeBadge.className='task-type-badge';
+  typeBadge.style.background=r.bg;
+  typeBadge.style.color=r.tc;
+  typeBadge.style.border='1.5px solid '+r.badge;
+  var typeLabels={artikel:'🏷️ Artikkel',lausejarjestus:'🔀 Lausejärjestus',vastandid:'↔️ Vastand',eisobi:'🔍 Mis ei sobi?'};
+  typeBadge.textContent=typeLabels[r.type]||r.type;
+  area.appendChild(typeBadge);
+
+  if(r.type==='artikel'){renderArtikkel(area,r,q);}
+  else if(r.type==='lausejarjestus'){renderLause(area,r,q);}
+  else if(r.type==='vastandid'){renderVastand(area,r,q);}
+  else if(r.type==='eisobi'){renderEiSobi(area,r,q);}
+}
+
+function renderArtikkel(area,r,q){
+  var card=document.createElement('div');
+  card.className='q-card';
+  card.style.background=r.bg;card.style.borderColor=r.badge;
+  card.innerHTML='<div class="q-sub" style="color:'+r.tc+';opacity:.7">Mis on õige artikkel?</div><div class="q-main" style="color:'+r.tc+';margin-top:10px">'+q.q+'</div>';
+  area.appendChild(card);
+  var grid=document.createElement('div');
+  grid.className='opts-grid3';
+  q.opts.forEach(function(opt){
+    var b=document.createElement('button');
+    b.className='opt-btn opt-normal';
+    b.style.fontSize='18px';
+    b.textContent=opt;
+    b.onclick=function(){answerSimple(opt,b,q,grid);};
+    grid.appendChild(b);
+  });
+  area.appendChild(grid);
+}
+
+function renderVastand(area,r,q){
+  var card=document.createElement('div');
+  card.className='q-card';
+  card.style.background=r.bg;card.style.borderColor=r.badge;
+  card.innerHTML='<div class="q-sub" style="color:'+r.tc+';opacity:.7">Leia vastand:</div><div class="q-main" style="color:'+r.tc+';margin-top:10px">'+q.q+'</div>';
+  area.appendChild(card);
+  var grid=document.createElement('div');
+  grid.className='opts-grid2';
+  var shuffled=shuffle(q.opts);
+  shuffled.forEach(function(opt){
+    var b=document.createElement('button');
+    b.className='opt-btn opt-normal';
+    b.textContent=opt;
+    b.onclick=function(){answerSimple(opt,b,q,grid);};
+    grid.appendChild(b);
+  });
+  area.appendChild(grid);
+}
+
+function renderEiSobi(area,r,q){
+  var card=document.createElement('div');
+  card.className='q-card';
+  card.style.background=r.bg;card.style.borderColor=r.badge;
+  card.innerHTML='<div class="q-sub" style="color:'+r.tc+';opacity:.7">Leia sõna, mis EI sobi:</div><div class="q-main" style="color:'+r.tc+';font-size:16px;margin-top:10px">'+q.q+'</div>';
+  area.appendChild(card);
+  var grid=document.createElement('div');
+  grid.className='opts-grid2';
+  var shuffled=shuffle(q.opts);
+  shuffled.forEach(function(opt){
+    var b=document.createElement('button');
+    b.className='opt-btn opt-normal';
+    b.textContent=opt;
+    b.onclick=function(){answerSimple(opt,b,q,grid);};
+    grid.appendChild(b);
+  });
+  area.appendChild(grid);
+}
+
+function renderLause(area,r,q){
+  var card=document.createElement('div');
+  card.className='q-card';
+  card.style.background=r.bg;card.style.borderColor=r.badge;
+  card.innerHTML='<div class="q-sub" style="color:'+r.tc+';opacity:.7">Pane sõnad õigesse järjekorda:</div><div class="q-main" style="color:'+r.tc+';font-size:15px;margin-top:8px">...</div>';
+  area.appendChild(card);
+
+  poolWords=shuffle(q.words.slice());
+  builtWords=[];
+
+  var builtDiv=document.createElement('div');
+  builtDiv.className='word-built';
+  builtDiv.id='built-div';
+  builtDiv.innerHTML='<span style="font-size:12px;color:#7c3aed">Kliki sõnadel siin järjekorras...</span>';
+  area.appendChild(builtDiv);
+
+  var poolDiv=document.createElement('div');
+  poolDiv.className='word-pool';
+  poolDiv.id='pool-div';
+  area.appendChild(poolDiv);
+
+  renderWordChips(q);
+
+  var btnRow=document.createElement('div');
+  btnRow.style.marginBottom='10px';
+  var checkBtn=document.createElement('button');
+  checkBtn.className='check-btn';
+  checkBtn.textContent='Kontrolli ✓';
+  checkBtn.id='check-btn';
+  checkBtn.onclick=function(){checkLause(q);};
+  var clearBtn=document.createElement('button');
+  clearBtn.className='clear-btn';
+  clearBtn.textContent='Tühjenda';
+  clearBtn.onclick=function(){if(!answered){builtWords=[];renderWordChips(q);}};
+  btnRow.appendChild(checkBtn);
+  btnRow.appendChild(clearBtn);
+  area.appendChild(btnRow);
+}
+
+function renderWordChips(q){
+  var poolDiv=$('pool-div');
+  var builtDiv=$('built-div');
+  if(!poolDiv||!builtDiv)return;
+  poolDiv.innerHTML='';
+  builtDiv.innerHTML='';
+
+  if(builtWords.length===0){
+    var hint=document.createElement('span');
+    hint.style.cssText='font-size:12px;color:#7c3aed';
+    hint.textContent='Kliki sõnadel siin järjekorras...';
+    builtDiv.appendChild(hint);
+  } else {
+    builtWords.forEach(function(w,i){
+      var chip=document.createElement('button');
+      chip.className='word-chip-built';
+      chip.textContent=w;
+      chip.onclick=function(){
+        if(answered)return;
+        builtWords.splice(i,1);
+        poolWords.push(w);
+        renderWordChips(q);
+      };
+      builtDiv.appendChild(chip);
+    });
+  }
+
+  poolWords.forEach(function(w){
+    var chip=document.createElement('button');
+    chip.className='word-chip';
+    chip.textContent=w;
+    chip.onclick=function(){
+      if(answered)return;
+      builtWords.push(w);
+      poolWords=poolWords.filter(function(x){return x!==w||(poolWords.splice(poolWords.indexOf(w),1)&&false);});
+      var idx=poolWords.indexOf(w);
+      if(idx>-1)poolWords.splice(idx,1);
+      renderWordChips(q);
+    };
+    poolDiv.appendChild(chip);
+  });
+}
+
+function checkLause(q){
+  if(answered)return;
+  if(builtWords.length===0){setGupus('normal','Pane kõigepealt sõnad järjekorda!');return;}
+  var built=builtWords.join(' ');
+  var correct=q.answer;
+  var ok=built.toLowerCase()===correct.toLowerCase();
+  answered=true;
+  var checkBtn=$('check-btn');
+  if(checkBtn)checkBtn.disabled=true;
+  var builtDiv=$('built-div');
+  if(builtDiv){
+    builtDiv.style.border='1.5px solid '+(ok?'#22c55e':'#ef4444');
+    builtDiv.style.background=ok?'#14402a':'#3b1218';
+  }
+  handleResult(ok,q);
+}
+
+function answerSimple(opt,btn,q,grid){
+  if(answered)return;
+  answered=true;
+  var ok=opt===q.right;
+  var btns=grid.querySelectorAll('button');
+  btns.forEach(function(b){
+    b.disabled=true;
+    if(b.textContent===q.right){b.className='opt-btn opt-ok';}
+    else if(b===btn&&!ok){b.className='opt-btn opt-fail';}
+  });
+  handleResult(ok,q);
+}
+
+function handleResult(ok,q){
+  $('hint-btn').disabled=true;
+  var ns=score+(ok?1:0);
+  if(ok){
+    setGupus('happy',OKMSGS[okI]);
+    okI=(okI+1)%OKMSGS.length;
+  } else {
+    setGupus('sad',FAILMSGS[Math.floor(Math.random()*FAILMSGS.length)]+' Õige: '+q.exp);
+  }
+  setTimeout(function(){
+    if(qIdx+1<TOTALQ){score=ns;qIdx++;loadQuestion();}
+    else{lastFinal=ns;roomScores.push(ns);showRoomResult();}
+  },2000);
+}
+
+function toggleHint(){
+  if(answered)return;
+  var r=ROOMS[roomIdx];
+  var q=currentQs[qIdx];
+  hintShown=!hintShown;
+  if(hintShown){
+    setGupus('thinking','💡 Vihje: '+q.hint);
+    $('hint-btn').textContent='Peida vihje';
+    $('hint-btn').style.color=r.accent;
+  } else {
+    setGupus('normal','Küsimus '+(qIdx+1)+'/'+TOTALQ+'. Gupus jälgib sind!');
+    $('hint-btn').textContent='💡 Vihje';
+    $('hint-btn').style.color='#7c6fad';
+  }
+}
+
+function showRoomResult(){
+  var r=ROOMS[roomIdx];
+  var passed=lastFinal>=PASS,isLast=roomIdx>=ROOMS.length-1;
+  var stars=lastFinal===5?'⭐⭐⭐':lastFinal>=4?'⭐⭐':'⭐';
+  $('r-icon').textContent=passed?'🔓':'🔒';
+  $('r-title').textContent=passed?(lastFinal===5?'Täiuslik! Gupus on šokis!':'Tuba avatud!'):'Gupus naerab... uks jäi lukku!';
+  $('r-ghost').className='gghost '+(passed?'fl':'sh');
+  $('r-jlabel').textContent=(passed?'😤':'😈')+' Gupus räägib:';
+  if(passed){
+    $('r-jmsg').textContent=isLast?'EI! SA VÕITSID! See pole võimalik! 😤🎊':'Uks avanes... aga tornil on veel toad! '+( ROOMS[roomIdx+1]?ROOMS[roomIdx+1].title+' ootab!':'');
+  } else {
+    $('r-jmsg').textContent='MUAHA! Vaja '+PASS+'/5 õiget. Gupus ootab sind tagasi... proovi uuesti! 😈';
+  }
+  var sb=$('r-score-box');
+  sb.innerHTML='';
+  var div=document.createElement('div');
+  div.className=passed?'rscore-ok':'rscore-fail';
+  div.textContent=lastFinal+'/'+TOTALQ+'  '+stars;
+  sb.appendChild(div);
+  var rb=$('r-btn');
+  if(passed){
+    rb.textContent=isLast?'Vaata tulemust 🏆':'Järgmine tuba →';
+    rb.className='btn-main';
+  } else {
+    rb.textContent='Proovi uuesti 🔮';
+    rb.className='btn-sec';
+  }
+  show('s-result');
+}
+
+function resultAction(){
+  var passed=lastFinal>=PASS,isLast=roomIdx>=ROOMS.length-1;
+  if(!passed){roomScores.pop();loadRoom();return;}
+  if(isLast){showVictory();return;}
+  roomIdx++;loadRoom();
+}
+
+function showVictory(){
+  var total=roomScores.reduce(function(a,b){return a+b;},0);
+  var max=ROOMS.length*TOTALQ;
+  var pct=Math.round(total/max*100);
+  $('v-medal').textContent=pct===100?'🥇':pct>=80?'🥈':'🥉';
+  var msg=pct===100?'Võimatu... absoluutselt võimatu! Sa oled saksa keele meister! Ma annan alla! 😤':'Okei, okei... sa oled tubli. Aga ma tulen tagasi tugevamana! 👾';
+  $('v-msg').textContent=msg;
+  var g=$('v-grid');g.innerHTML='';
+  ROOMS.forEach(function(r,i){
+    var rs=roomScores[i]||0;
+    var st=rs===5?'⭐⭐⭐':rs>=4?'⭐⭐':'⭐';
+    var d=document.createElement('div');
+    d.className='v-card';
+    d.style.background=r.bg;d.style.borderColor=r.badge;
+    d.innerHTML='<div style="font-size:12px;font-weight:600;color:'+r.tc+';margin-bottom:4px">'+r.emoji+' '+r.title+'</div><div style="font-size:20px;font-weight:700;color:'+r.accent+'">'+rs+'/'+TOTALQ+' <span style="font-size:12px;font-weight:400;color:'+r.tc+'">'+st+'</span></div>';
+    g.appendChild(d);
+  });
+  $('v-total').textContent=total+'/'+max+' punkti ('+pct+'%)';
+  show('s-victory');
+}
+
+buildIntroRooms();
+</script>
+</body>
+</html>
